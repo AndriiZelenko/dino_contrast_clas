@@ -1,0 +1,67 @@
+#all classes separate
+Baseline0Deg          : True
+Baseline45Deg         : True
+BlowHole              : True
+BurnThrough           : True
+Cleaned               : True
+Crater                : True
+CTWD13-25mm           : True
+CTWD25-13mm           : True
+ExcessiveGapWHole0deg : True
+ExcessiveGapWHole45Deg: True
+ExcessiveGapWHole90Deg: True
+Gap0-2mm0Deg          : True
+Gap0-2mm45Deg         : True
+Gap0.5mm0Deg          : True
+Gap0.5mm45Deg         : True
+Gap1mm0Deg            : True
+Gap1mm45Deg           : True
+Gap2-0mm0Deg          : True
+Gap2-0mm45Deg         : True
+Gap2mm0Deg            : True
+Gap2mm45Deg           : True
+LackofFusion          : True
+Loc+10Deg             : True
+Loc+145Deg            : True
+Loc-10Deg             : True
+Loc-145Deg            : True
+Loc-2+20Deg           : True
+Loc-2+245Deg          : True
+LooseContactTip       : True
+MeltThrough0Deg       : True
+MeltThrough45Deg      : True
+MissingWeld           : True
+NoMeltThrought0Deg    : True
+NoMeltThrought45Deg   : True
+Nothces               : True
+Oil                   : True
+PorosityFan           : True
+PorosityNoGas         : True
+ShortWelds15mm        : True
+ShortWelds20mm        : True
+ShortWelds25mm        : True
+Skip                  : True
+Spatter               : True
+Undercut              : True
+UnstableWeld          : True
+WireStick             : True
+
+
+
+
+#9 class multi
+# Healthy:
+#   Cleaned             : True
+#   Baseline45Deg       : True
+#   Baseline0Deg        : True
+# Porosity:
+#   PorosityFan         : True
+#   PorosityNoGas       : True
+# Oil                   : True
+# Skip                  : True
+# BurnThrough           : True
+# BlowHole              : True
+# Nothces               : True
+# UnstableWeld          : True
+# WireStick             : True
+# Undercut              : True

@@ -1,0 +1,19 @@
+
+
+batch_size : 5
+train_ratio    : 0.7
+test_ratio     : 0.3
+val_ratio       : 0.0
+size    : 952 
+device     : 'cuda:3'
+dino_size  : 'small'   #base, large or giant, large and giant useless
+training_folder : '/home/andrii/adient/15_multiclass'
+dino_folder_path : '/home/andrii/adient/dinov2'
+n_embeddings : 128
+lr           : 0.01
+num_epochs   : 50
+threshold    : 0.5
+images_folder   : '/home/andrii/adient/welding_data'
+train_test_split_json : '/home/andrii/adient//train_test_2.json'
+mean : [0.485, 0.456, 0.406]
+std : [0.229, 0.224, 0.225]

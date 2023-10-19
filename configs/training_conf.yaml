@@ -1,0 +1,21 @@
+
+
+batch_size : 5
+train_ratio    : 0.7
+test_ratio     : 0.3
+val_ratio       : 0.0
+size    : 952 
+device     : 'cuda'
+dino_size  : 'small'   #base, large or giant, large and giant useless
+dino_folder_path : '/home/andrii/adient/dinov2'
+pca_save_path : '/home/andrii/adient/9multiclass/pca'
+n_embeddings : 128
+lr           : 0.01
+num_epochs   : 50
+log_dir      : '/home/andrii/adient/9multiclass/logs'
+threshold    : 0.5
+weights_save_path : '/home/andrii/adient/9multiclass/weights/projection_layer.pt'
+images_folder   : '/home/andrii/adient/welding_data'
+train_test_split_json : '/home/andrii/adient/train_test.json'
+mean : [0.485, 0.456, 0.406]
+std : [0.229, 0.224, 0.225]

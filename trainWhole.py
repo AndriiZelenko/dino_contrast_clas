@@ -48,6 +48,8 @@ training_config_path = args.training_config_path
 
 training_config_file = open(training_config_path, 'r')
 training_config_data = yaml.safe_load(training_config_file)
+training_config_file = open(training_config_path, 'r')
+training_config_data = yaml.safe_load(training_config_file)
 
 batch_size = training_config_data['batch_size']
 device = torch.device(training_config_data['device'])
@@ -57,37 +59,43 @@ batch_size = training_config_data['batch_size']
 threshold = training_config_data['threshold']
 
 n_embeddings = training_config_data['n_embeddings']
-pca_save_path = training_config_data['pca_save_path']
-text_report_path = training_config_data['text_reports_folder_path']
 
-log_dir_contrast = training_config_data['log_dir_contrast']  
-log_dir_classifier = training_config_data['log_dir_classification']
 
-contrast_save_path = training_config_data['conrast_weights_save_path']
-clasifier_save_path = training_config_data['clasifier_head_save_path']
 
-dataset_info_path = training_config_data['dataset_info_path']
-save_distro_json_path = training_config_data['store_json_distro']
+training_folder = training_config_data['training_folder']
+
+
+logs = os.path.join(training_folder, 'logs')
+log_dir_contrast = os.path.join(logs, 'contrast_logs')
+log_dir_classifier = os.path.join(logs, 'clasifier_logs')
+
+weights_path = os.path.join(training_folder, 'weights')
+contrast_save_path = os.path.join(weights_path, 'projection_head.pt')
+clasifier_save_path = os.path.join(weights_path, 'clasifier_head.pt')
+
+dataset_info_path = os.path.join(training_folder, 'dataset_info.path')
+save_distro_json_path = os.path.join(training_folder, 'distro.json')
 train_test_data = training_config_data['train_test_split_json']
 
+text_report_path = os.path.join(training_folder, 'text_report')
 
+temporary_dir_path = os.path.join(training_folder, 'temp')
+def create_dir(path):
+    if os.path.exists(path):
+        pass
+    else:
+        os.mkdir(path)
+create_dir(logs)
+create_dir(log_dir_contrast)
+create_dir(log_dir_classifier)
+create_dir(weights_path)
+create_dir(text_report_path)
+create_dir(temporary_dir_path)
+to_ten = transforms.ToTensor()
 
 contrast_writer = SummaryWriter(log_dir_contrast)
 clasifier_writer = SummaryWriter(log_dir_classifier)
 
-to_ten = transforms.ToTensor()
-
-print(f'batch size: {batch_size}')
-print(f'learning rate: {lr}')
-print(f'num embeddings: {n_embeddings}')
-print(f'contrast logs: {log_dir_contrast}')
-print(f'clasisifer logs : {log_dir_classifier}')
-print(f'contrsat weights: {contrast_save_path}')
-print(f'clasifier weiights: {clasifier_save_path}')
-print(f'json distro path : {save_distro_json_path}')
-print(f'train test split json: {train_test_data}')
-print(f'pca : {pca_save_path}')
-print(f'device: {device}')
 
 
 torch.cuda.empty_cache()
@@ -110,14 +118,12 @@ with open(dataset_info_path, 'w') as dataset_info:
 
 wd.save(save_distro_json_path)
 
-
 num_classes = len(wd.idx2class)
 
 backbone = get_backbone(size = 'small')
 criterion = losses.ArcFaceLoss(num_classes = num_classes, embedding_size = n_embeddings)
 model = supConClas(backbone, n_embeddings)
 optimizer2 = torch.optim.Adam(list(model.parameters()) + list(criterion.parameters()), lr = lr)
-
 
 model.train()
 model.to(device)
@@ -126,7 +132,7 @@ criterion = criterion.to(device)
 best_val_loss = torch.inf
 
 for epoch in range(num_epochs):
-    print(f'projection epoch: {epoch}')
+    print(f'projction epoch: {epoch}')
     model.train()
     training_loss = 0
     for idx, (image, label) in enumerate(train_dataloader):
@@ -164,9 +170,9 @@ for epoch in range(num_epochs):
         
     all_features = all_features[1:,:]   
     inner_d, outer_d = calcualate_inner_outer_distances(all_features.detach(), all_labels.detach())
-    if epoch % 4 == 0:
-        pca2 = calculate_pca_analysis(all_features.detach(), all_labels.detach())
-        plot_pca_2( all_labels.detach(),pca2, test_dataloader.dataset.idx2class, pca_save_path, epoch)
+    if epoch % 5 == 0 or epoch == num_epochs -1:
+#         pca2 = calculate_pca_analysis(all_features.detach(), all_labels.detach())
+#         plot_pca_2( all_labels.detach(),pca2, test_dataloader.dataset.idx2class, pca_save_path, epoch)
         distance_matrix = np.zeros((num_classes, num_classes))
         outer_d2 = list(outer_d)
         for i in range(num_classes):
@@ -180,9 +186,9 @@ for epoch in range(num_epochs):
         ax.set_xticklabels(wd.idx2class.values(), rotation=45, ha='right', fontsize=10)
         ax.set_yticklabels(wd.idx2class.values(), fontsize=10, rotation = 0)
         fig = a.get_figure()
-        fig.savefig(f"{pca_save_path}/out_contrast.png") 
+        fig.savefig(f"{temporary_dir_path}/out_contrast.png") 
 
-        image = Image.open(f"{pca_save_path}/out_contrast.png")
+        image = Image.open(f"{temporary_dir_path}/out_contrast.png")
         image_tensor = to_ten(image)
         contrast_writer.add_image(f'Distance_Matrix_Heatmap_{epoch}', image_tensor)
 
@@ -193,12 +199,15 @@ for epoch in range(num_epochs):
     
 
 
+
         
 torch.cuda.empty_cache()
+
 
 backbone = get_backbone(size = 'small')
 supConModel = supConClas(backbone, n_embeddings)
 supConModel.load_state_dict(torch.load(contrast_save_path))
+
 
 res_model = clasifier(backbone = supConModel, num_classes = num_classes, threshold = threshold)
 
@@ -206,11 +215,12 @@ optimizer = torch.optim.Adam(res_model.parameters(), lr = lr)
 criterion = nn.CrossEntropyLoss()
 criterion = criterion.to(device)
 
+
 res_model = res_model.to(device)
 
 best_val_loss = torch.inf
 for epoch in range(num_epochs):
-    print(f'calssification epoch: {epoch}')
+    print(f'classification epoch: {epoch}')
     train_loss = 0
     res_model.train()
 
@@ -244,10 +254,7 @@ for epoch in range(num_epochs):
         all_labels.extend(batch_labels)
     test_loss/= (idx + 1)
     
-    if test_loss < best_val_loss:
-        best_val_loss = test_loss
-        torch.save(res_model.state_dict(), clasifier_save_path)
-        print(f' model saved: {clasifier_save_path}')
+
     
     
     accuracy = accuracy_score(all_labels, all_predictions)
@@ -262,9 +269,6 @@ for epoch in range(num_epochs):
 
 
     confusion = confusion_matrix(all_labels, all_predictions)
-    report = classification_report(all_labels, all_predictions, target_names=class_names)
-    with open(f'{text_report_path}/report_{epoch}.txt', 'w') as report_file:
-        report_file.write(report)
 
     clasifier_writer.add_text(f"Classification Report_{epoch}", report, global_step=epoch)
     clasifier_writer.add_scalar("Train Loss", train_loss, epoch)
@@ -273,15 +277,29 @@ for epoch in range(num_epochs):
     clasifier_writer.add_scalar("Precision", precision, epoch)
     clasifier_writer.add_scalar("Recall", recall, epoch)
     clasifier_writer.add_scalar("F1", f1, epoch)
-    if epoch % 4 == 0 or epoch == num_epochs - 1:
+    
+    if test_loss < best_val_loss:
+        best_val_loss = test_loss
+        torch.save(res_model.state_dict(), clasifier_save_path)
+        report = classification_report(all_labels, all_predictions, target_names=class_names)
+        with open(f'{text_report_path}/report_{epoch}.txt', 'w') as report_file:
+            report_file.write(report)
+
+
+        print(f' model saved: {clasifier_save_path}')
+        
+        
+    if epoch % 5 == 0 or epoch == num_epochs - 1:
         plt.figure(figsize=(8, 6))
         ax = plt.gca()
         a = sns.heatmap(confusion, cmap='RdBu', annot=True, fmt=".2f", linewidths=.5, ax=ax)
         ax.set_xticklabels(wd.idx2class.values(), rotation=45, ha='right', fontsize=10)
         ax.set_yticklabels(wd.idx2class.values(), fontsize=10, rotation = 0)
         fig = a.get_figure()
-        fig.savefig(f"{pca_save_path}/out_class.png") 
+        fig.savefig(f"{temporary_dir_path}/out_class.png") 
 
-        image = Image.open(f"{pca_save_path}/out_class.png")
+        image = Image.open(f"{temporary_dir_path}/out_class.png")
         image_tensor = to_ten(image)
         clasifier_writer.add_image(f'Distance_Matrix_Heatmap_{epoch}', image_tensor)
+
+    
